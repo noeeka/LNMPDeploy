@@ -40,9 +40,29 @@ if [ $? != 0 ]; then
   echo "apt-get -y upgrade" >> log
 fi
 
-apt-get install -y gcc g++ make wget unzip ntpdate git
+apt-get install -y gcc
 if [ $? != 0 ]; then
-  echo "apt-get install -y gcc g++ make wget unzip ntpdate git" >> log
+  echo "apt-get install -y gcc" >> log
+fi
+apt-get install -y g++
+if [ $? != 0 ]; then
+  echo "apt-get install -y g++" >> log
+fi
+apt-get install -y make
+if [ $? != 0 ]; then
+  echo "apt-get install -y make" >> log
+fi
+apt-get install -y wget
+if [ $? != 0 ]; then
+  echo "apt-get install -y wget" >> log
+fi
+apt-get install -y unzip ntpdate
+if [ $? != 0 ]; then
+  echo "apt-get install -y unzip ntpdate" >> log
+fi
+apt-get install -y git
+if [ $? != 0 ]; then
+  echo "apt-get install -y git" >> log
 fi
 }
 
@@ -496,9 +516,18 @@ fi
 #if [ $? != 0 ]; then
 #  echo "/etc/init.d/networking restart" >> log
 #fi
-
-
-
+echo "+------------------------------------------------------------------------+"
+echo "|  Management Center Server Installer                                    |"
+echo "+------------------------------------------------------------------------+"
+echo "|  A tool to auto-install MC Server Script and nessary extension on Linux|"
+echo "+------------------------------------------------------------------------+"
+echo "|  Write By James Chen and GaoXin Da@Systec team                         |"
+echo "+------------------------------------------------------------------------+"
+install_needs
+install_lnmp
+install_python
+install_ffmpeg
+install_mqtt
 read -p "Please input version:" version
 mkdir myrepo
 cd myrepo
@@ -516,21 +545,8 @@ mkdir /home/wwwroot && mkdir /home/wwwroot/default && chmod 777 /home/ -R
 mv Server版管理中心服务端/* /home/wwwroot/default/
 #tar xvf management.tar -C /home/wwwroot/default
 fi
-
-
-
-
 echo 'export TZ="Asia/Shanghai"' >> /etc/profile
 source /etc/profile
-
-
-install_needs
-install_lnmp
-install_python
-install_ffmpeg
-install_mqtt
-
-
 echo '1 */8 * * *   root    python /home/wwwroot/default/lib/python/crawlTraffic.py
 * * * * * root      php /home/wwwroot/default/cron/crawlMap.php
 * * * * * root      python /home/wwwroot/default/lib/python/crawlNews.py
@@ -591,10 +607,10 @@ defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9);
 defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125);
 defined('SALT')                OR define('SALT', 'woaidalianmao');
 defined('TRAFFIC_APK')         OR define('TRAFFIC_APK', '54c3e5a0-9b73-0135-3385-0242c0a80006');
-define("SUPER","superadmin");
-define("PASSWORD","2d17efbcd61215b017b53b1fe1d28098");
-define("ADMIN","admin");
-define("ADMIN_PASSWORD","21232f297a57a5a743894a0e4a801fc3");
+define('SUPER','superadmin');
+define('PASSWORD','2d17efbcd61215b017b53b1fe1d28098');
+define('ADMIN','admin');
+define('ADMIN_PASSWORD','21232f297a57a5a743894a0e4a801fc3');
 defined('TOKEN_ERROR')         OR define('TOKEN_ERROR', 'Access Token Error');
 define('RES_MONOMER', 1);
 define('RES_SHARE', 2);
@@ -620,4 +636,3 @@ output_slaver="define('SLAVER','${ipaddr}');"
 echo $output_constant $output_master $output_slaver > /home/wwwroot/default/application/config/constants.php
 chmod 777 /home/wwwroot/default/ -R
 echo "Gaoxin Da is extremely NB!"
-
