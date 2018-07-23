@@ -483,6 +483,53 @@ if [ $? != 0 ]; then
 fi
 }
 
+#安装守护进程服务
+install_daemon(){
+apt-get install -y supervisor
+if [ $? != 0 ]; then
+  echo "apt-get install -y supervisor" >> log
+fi
+echo '1 */8 * * *   root    python /home/wwwroot/default/lib/python/crawlTraffic.py
+* * * * * root      php /home/wwwroot/default/cron/crawlMap.php
+* * * * * root      python /home/wwwroot/default/lib/python/crawlNews.py
+* * * * * root      python /home/wwwroot/default/lib/python/crawlWeather.py
+@reboot   root      supervisorctl reload
+' >> /etc/crontab
+echo '[program:app]
+command=/usr/bin/python2.7 /home/wwwroot/default/lib/python/messageHandle.py
+autostart=true
+autorestart=true
+directory=/home/wwwroot/default/lib/python
+user=root'>/etc/supervisor/conf.d/app.conf
+supervisorctl reload
+if [ $? != 0 ]; then
+  echo "supervisorctl reload" >> log
+fi
+supervisorctl start app
+if [ $? != 0 ]; then
+  echo "supervisorctl start app" >> log
+fi
+echo '#!/bin/sh -e
+/usr/bin/supervisord
+exit' > /etc/rc.local
+cd /usr/lib/systemd/ && mkdir system
+echo '#supervisord.service
+[Unit]
+Description=Supervisor daemon
+[Service]
+Type=forking
+ExecStart=/usr/bin/supervisorctl reload
+KillMode=process
+Restart=on-failure
+RestartSec=42s
+[Install]
+WantedBy=multi-user.target'>/usr/lib/systemd/system/supervisord.service
+systemctl enable supervisord
+if [ $? != 0 ]; then
+  echo "systemctl enable supervisord" >> log
+fi
+}
+
 #主程序开始
 #
 #read -p "Please input ip address:" ipaddr
@@ -545,40 +592,12 @@ mkdir /home/wwwroot && mkdir /home/wwwroot/default && chmod 777 /home/ -R
 mv Server版管理中心服务端/* /home/wwwroot/default/
 #tar xvf management.tar -C /home/wwwroot/default
 fi
+mysql -uroot -proot <  /home/wwwroot/default/management.sql
+
+install_daemon
 echo 'export TZ="Asia/Shanghai"' >> /etc/profile
 source /etc/profile
-echo '1 */8 * * *   root    python /home/wwwroot/default/lib/python/crawlTraffic.py
-* * * * * root      php /home/wwwroot/default/cron/crawlMap.php
-* * * * * root      python /home/wwwroot/default/lib/python/crawlNews.py
-* * * * * root      python /home/wwwroot/default/lib/python/crawlWeather.py
-@reboot   root      supervisorctl reload
-' >> /etc/crontab
 
-apt-get install -y supervisor
-echo '[program:app]
-command=/usr/bin/python2.7 /home/wwwroot/default/lib/python/messageHandle.py
-autostart=true
-autorestart=true
-directory=/home/wwwroot/default/lib/python
-user=root'>/etc/supervisor/conf.d/app.conf
-supervisorctl reload && supervisorctl start app
-mysql -uroot -proot <  /home/wwwroot/default/management.sql
-echo '#!/bin/sh -e
-/usr/bin/supervisord
-exit' > /etc/rc.local
-cd /usr/lib/systemd/ && mkdir system
-echo '#supervisord.service
-[Unit]
-Description=Supervisor daemon
-[Service]
-Type=forking
-ExecStart=/usr/bin/supervisorctl reload
-KillMode=process
-Restart=on-failure
-RestartSec=42s
-[Install]
-WantedBy=multi-user.target'>/usr/lib/systemd/system/supervisord.service
-systemctl enable supervisord
 ntpdate ntp.sjtu.edu.cn
 ipaddr=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
 output_constant="<?php
