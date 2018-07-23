@@ -531,38 +531,6 @@ fi
 }
 
 #主程序开始
-#
-#read -p "Please input ip address:" ipaddr
-#check_ipaddr ${ipaddr}
-#
-#if test $? -eq 0
-#then
-#	ip=${ipaddr}
-#else
-#	exit
-#fi
-##获取网关地址服务
-#gateway=$(echo ${ip} | sed 's:[^.]*$:1:')
-#cat > /etc/network/interfaces << EOF
-#source /etc/network/interfaces.d/*
-#auto lo
-#iface lo inet loopback
-#allow-hotplug eth0
-#iface eth0 inet static
-#address ${ip}
-#netmask 255.255.255.0
-#gateway ${gateway}
-#EOF
-#cat > /etc/resolv.conf << EOF
-#domain localdomain
-#search localdomain
-#nameserver ${gateway}
-#EOF
-#
-#/etc/init.d/networking restart
-#if [ $? != 0 ]; then
-#  echo "/etc/init.d/networking restart" >> log
-#fi
 echo "+------------------------------------------------------------------------+"
 echo "|  Management Center Server Installer                                    |"
 echo "+------------------------------------------------------------------------+"
@@ -570,6 +538,47 @@ echo "|  A tool to auto-install MC Server Script and nessary extension on Linux|
 echo "+------------------------------------------------------------------------+"
 echo "|  Write By James Chen and GaoXin Da@Systec team                         |"
 echo "+------------------------------------------------------------------------+"
+read -p "Please input server ip address:" ipaddr
+check_ipaddr ${ipaddr}
+if test $? -eq 0
+then
+	ip=${ipaddr}
+else
+	exit
+fi
+read -p "Please input gateway ip address:" gateway
+check_ipaddr ${gateway}
+if test $? -eq 0
+then
+	gateway=${gateway}
+else
+	exit
+fi
+#获取网关地址服务
+#gateway=$(echo ${ip} | sed 's:[^.]*$:1:')
+broadcast=$(echo ${ip} | sed 's:[^.]*$:255:')
+cat > /etc/network/interfaces << EOF
+source /etc/network/interfaces.d/*
+auto lo
+iface lo inet loopback
+allow-hotplug eth1
+iface eth1 inet static
+address ${ip}
+netmask 255.255.255.0
+gateway ${gateway}
+broadcast ${broadcast}
+dns ${gateway} 8.8.8.8 8.8.4.4 114.114.114.114
+EOF
+cat > /etc/resolv.conf << EOF
+domain localdomain
+search localdomain
+nameserver ${gateway}
+EOF
+
+/etc/init.d/networking restart
+if [ $? != 0 ]; then
+ echo "/etc/init.d/networking restart" >> log
+fi
 install_needs
 install_lnmp
 install_python
@@ -654,4 +663,10 @@ output_master="define('MASTER','${ipaddr}');"
 output_slaver="define('SLAVER','${ipaddr}');"
 echo $output_constant $output_master $output_slaver > /home/wwwroot/default/application/config/constants.php
 chmod 777 /home/wwwroot/default/ -R
-echo "Gaoxin Da is extremely NB!"
+echo "+------------------------------------------------------------------------+"
+echo "|  Management Center Server Install Completed!                           |"
+echo "+------------------------------------------------------------------------+"
+echo "|  Server address is:${ipaddr}							               |"
+echo "+------------------------------------------------------------------------+"
+echo "|  Please download client-side in http://www.systec.com                  |"
+echo "+------------------------------------------------------------------------+"
